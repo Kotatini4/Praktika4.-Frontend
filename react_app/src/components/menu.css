@@ -1,0 +1,24 @@
+.menu-container {
+    text-align: center;
+    padding: 40px;
+}
+
+.menu-container h1 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+}
+
+.menu-container button {
+    padding: 12px 24px;
+    font-size: 1rem;
+    background-color: #1976d2;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.menu-container button:hover {
+    background-color: #1259a8;
+}

@@ -1,0 +1,23 @@
+.quiz-container {
+    max-width: 600px;
+    margin: auto;
+    text-align: center;
+    padding: 20px;
+}
+
+button {
+    display: block;
+    margin: 10px auto;
+    padding: 10px 20px;
+    font-size: 1rem;
+}
+
+.correct {
+    background-color: #4caf50;
+    color: white;
+}
+
+.wrong {
+    background-color: #f44336;
+    color: white;
+}
