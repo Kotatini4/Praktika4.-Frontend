@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import "bootstrap/dist/css/bootstrap.min.css";
+import { useParams, useNavigate } from "react-router-dom";
 import confetti from "canvas-confetti";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 const decodeHTML = (html) => {
     const txt = document.createElement("textarea");
@@ -9,60 +9,9 @@ const decodeHTML = (html) => {
     return txt.value;
 };
 
-const data = [
-    {
-        question: "Столица Франции?",
-        correct_answer: "Париж",
-        incorrect_answers: ["Берлин", "Рим", "Мадрид"],
-    },
-    {
-        question: "Какая самая большая страна в мире по территории?",
-        correct_answer: "Россия",
-        incorrect_answers: ["Канада", "Китай", "США"],
-    },
-    {
-        question: "В какой стране находится гора Эверест?",
-        correct_answer: "Непал",
-        incorrect_answers: ["Индия", "Китай", "Пакистан"],
-    },
-    {
-        question: "Какое самое длинное в мире озеро?",
-        correct_answer: "Каспийское море",
-        incorrect_answers: ["Байкал", "Виктория", "Онтарио"],
-    },
-    {
-        question: "Какая река самая длинная в мире?",
-        correct_answer: "Амазонка",
-        incorrect_answers: ["Нил", "Янцзы", "Миссисипи"],
-    },
-    {
-        question: "В какой стране находится Великая китайская стена?",
-        correct_answer: "Китай",
-        incorrect_answers: ["Япония", "Монголия", "Индия"],
-    },
-    {
-        question: "Какой океан самый глубокий?",
-        correct_answer: "Тихий",
-        incorrect_answers: ["Атлантический", "Индийский", "Северный ледовитый"],
-    },
-    {
-        question: "Какая страна граничит с наибольшим количеством государств?",
-        correct_answer: "Китай",
-        incorrect_answers: ["Россия", "США", "Бразилия"],
-    },
-    {
-        question: "На каком материке находится пустыня Сахара?",
-        correct_answer: "Африка",
-        incorrect_answers: ["Азия", "Австралия", "Южная Америка"],
-    },
-    {
-        question: "Какой континент самый маленький по площади?",
-        correct_answer: "Австралия",
-        incorrect_answers: ["Европа", "Антарктида", "Южная Америка"],
-    },
-];
-
-const Quiz = () => {
+const QuizAPI = () => {
+    const { difficulty } = useParams();
+    const [questions, setQuestions] = useState([]);
     const [current, setCurrent] = useState(0);
     const [selected, setSelected] = useState(null);
     const [score, setScore] = useState(0);
@@ -71,25 +20,38 @@ const Quiz = () => {
     const [answers, setAnswers] = useState([]);
     const timerRef = useRef(null);
     const navigate = useNavigate();
-    const currentQuestion = data[current];
 
     useEffect(() => {
-        const shuffle = () => {
-            const options = [...data[current].incorrect_answers];
-            const correct = data[current].correct_answer;
+        // Сброс состояния
+        setQuestions([]);
+        setAnswers([]);
+        setCurrent(0);
+        setSelected(null);
+        setScore(0);
+        setFinished(false);
+        setTimeLeft(90);
 
-            if (!options.includes(correct)) {
-                options.splice(
-                    Math.floor(Math.random() * (options.length + 1)),
-                    0,
-                    correct
-                );
-            }
+        fetch(
+            `https://opentdb.com/api.php?amount=10&category=22&difficulty=${difficulty}&type=multiple`
+        )
+            .then((res) => res.json())
+            .then((data) => {
+                if (!data.results || data.results.length === 0) {
+                    alert(
+                        "Сервер вернул пустой список вопросов. Попробуйте позже."
+                    );
+                    return;
+                }
 
-            return options;
-        };
+                setQuestions(data.results);
+                setAnswers(shuffleAnswers(data.results[0]));
+            });
+    }, [difficulty]);
 
-        setAnswers(shuffle());
+    useEffect(() => {
+        if (questions.length > 0) {
+            setAnswers(shuffleAnswers(questions[current]));
+        }
     }, [current]);
 
     useEffect(() => {
@@ -117,21 +79,40 @@ const Quiz = () => {
         }
     }, [finished]);
 
+    const shuffleAnswers = (question) => {
+        const options = [...question.incorrect_answers];
+        const correct = question.correct_answer;
+        options.splice(Math.floor(Math.random() * 4), 0, correct);
+        return options;
+    };
+
     const handleAnswer = (answer) => {
         if (selected || finished) return;
         setSelected(answer);
-        if (answer === currentQuestion.correct_answer) {
-            setScore(score + 1);
+        if (answer === questions[current].correct_answer) {
+            setScore((prev) => prev + 1);
         }
+
         setTimeout(() => {
-            if (current + 1 < data.length) {
-                setCurrent(current + 1);
+            if (current + 1 < questions.length) {
+                setCurrent((prev) => prev + 1);
                 setSelected(null);
             } else {
                 setFinished(true);
             }
         }, 1500);
     };
+
+    if (!questions.length || !questions[current]) {
+        return (
+            <div
+                className="text-center text-white"
+                style={{ paddingTop: "100px" }}
+            >
+                Загрузка вопросов...
+            </div>
+        );
+    }
 
     if (finished) {
         return (
@@ -148,22 +129,32 @@ const Quiz = () => {
                     overflow: "hidden",
                 }}
             >
-                <div className="container text-center">
-                    <h2 className="mb-3 text-white">🎉 Игра завершена!</h2>
-                    <p className="lead text-white fw-bold fs-4">
-                        Правильных ответов: {score} из {data.length}
+                <div
+                    className="text-center card shadow p-4"
+                    style={{
+                        width: "100%",
+                        maxWidth: "600px",
+                        minWidth: "350px",
+                        backgroundColor: "white",
+                        borderRadius: "12px",
+                    }}
+                >
+                    <h2 className="mb-3">🎉 Викторина завершена!</h2>
+                    <p className="fw-bold fs-4 mb-4">
+                        Правильных ответов: {score} из {questions.length}
                     </p>
+
                     <div className="d-flex justify-content-center gap-3">
                         <button
                             className="btn btn-light btn-lg"
-                            onClick={() => window.location.reload()}
+                            onClick={() => navigate("/quiz-api")}
                         >
                             Сыграть ещё раз
                         </button>
 
                         <button
                             className="btn btn-light btn-lg"
-                            onClick={() => (window.location.href = "/")}
+                            onClick={() => navigate("/")}
                         >
                             В главное меню
                         </button>
@@ -172,15 +163,16 @@ const Quiz = () => {
             </div>
         );
     }
+
     return (
         <div
             className="d-flex justify-content-center align-items-center"
             style={{
                 minHeight: "100vh",
-                width: "100vw",
+                width: "100vw", // 👈 важно!
                 margin: 0,
                 padding: 0,
-                background: "linear-gradient(to right, #4facfe, #00f2fe)", // красивый градиент
+                background: "linear-gradient(to right, #4facfe, #00f2fe)",
                 backgroundSize: "cover",
                 backgroundPosition: "center",
                 overflow: "hidden",
@@ -196,14 +188,17 @@ const Quiz = () => {
                     borderRadius: "12px",
                 }}
             >
-                <h4 className="mb-3">{decodeHTML(currentQuestion.question)}</h4>
+                <h5 className="mb-4">
+                    {decodeHTML(questions[current].question)}
+                </h5>
+
                 {answers.map((answer, index) => (
                     <button
                         key={index}
                         onClick={() => handleAnswer(answer)}
                         className={`btn btn-outline-primary btn-block mb-2 ${
                             selected
-                                ? answer === currentQuestion.correct_answer
+                                ? answer === questions[current].correct_answer
                                     ? "btn-success text-white"
                                     : answer === selected
                                     ? "btn-danger text-white"
@@ -214,28 +209,31 @@ const Quiz = () => {
                         {decodeHTML(answer)}
                     </button>
                 ))}
+
+                {/* Прогресс бар */}
                 <div className="progress my-3" style={{ height: "20px" }}>
                     <div
                         className="progress-bar progress-bar-striped progress-bar-animated bg-success"
                         role="progressbar"
                         style={{
-                            width: `${((current + 1) / data.length) * 100}%`,
+                            width: `${
+                                ((current + 1) / questions.length) * 100
+                            }%`,
                         }}
-                        aria-valuenow={current + 1}
-                        aria-valuemin="0"
-                        aria-valuemax={data.length}
                     >
-                        Вопрос {current + 1} из {data.length}
+                        Вопрос {current + 1} из {questions.length}
                     </div>
                 </div>
 
-                <p className="text-danger fw-bold">
-                    Осталось времени: {timeLeft} сек
+                {/* Таймер */}
+                <p className="text-danger fw-bold text-end">
+                    Осталось: {timeLeft} сек
                 </p>
 
+                {/* Кнопка выхода */}
                 <button
                     onClick={() => setFinished(true)}
-                    className="btn btn-outline-danger mt-4"
+                    className="btn btn-outline-danger mt-3"
                     style={{ float: "right" }}
                 >
                     Выйти
@@ -245,4 +243,4 @@ const Quiz = () => {
     );
 };
 
-export default Quiz;
+export default QuizAPI;

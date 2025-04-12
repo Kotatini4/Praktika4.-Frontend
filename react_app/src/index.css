@@ -24,11 +24,19 @@ a:hover {
 
 body {
     margin: 0;
+    padding: 0;
+    min-width: 320px;
+    min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    min-width: 320px;
-    min-height: 100vh;
+
+    /* 🎨 Градиентный фон */
+    background: linear-gradient(to right, #4facfe, #00f2fe);
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
+    font-family: sans-serif;
 }
 
 h1 {

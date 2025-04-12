@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 
-const Menu = () => {
+const MenuAPI = () => {
     return (
         <div
             className="d-flex justify-content-center align-items-center"
@@ -16,16 +16,23 @@ const Menu = () => {
             }}
         >
             <div className="container text-center">
-                <h1 className="mb-5 text-white">Выберите викторину</h1>
+                <h1 className="mb-5 text-white">
+                    География — выбери сложность
+                </h1>
                 <div className="d-flex flex-column gap-3">
-                    <Link to="/quiz">
+                    <Link to="/quiz-api/easy">
                         <button className="btn btn-light btn-lg w-100">
-                            🌍 География (локально)
+                            🟢 Лёгкий
                         </button>
                     </Link>
-                    <Link to="/quiz-api">
+                    <Link to="/quiz-api/medium">
                         <button className="btn btn-light btn-lg w-100">
-                            🎲 Общая викторина (из API)
+                            🟡 Средний
+                        </button>
+                    </Link>
+                    <Link to="/quiz-api/hard">
+                        <button className="btn btn-light btn-lg w-100">
+                            🔴 Сложный
                         </button>
                     </Link>
                 </div>
@@ -34,4 +41,4 @@ const Menu = () => {
     );
 };
 
-export default Menu;
+export default MenuAPI;
