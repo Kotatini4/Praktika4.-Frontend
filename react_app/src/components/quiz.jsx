@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
+import confetti from "canvas-confetti";
 
 const decodeHTML = (html) => {
     const txt = document.createElement("textarea");
@@ -66,7 +67,7 @@ const Quiz = () => {
     const [selected, setSelected] = useState(null);
     const [score, setScore] = useState(0);
     const [finished, setFinished] = useState(false);
-    const [timeLeft, setTimeLeft] = useState(120);
+    const [timeLeft, setTimeLeft] = useState(90);
     const [answers, setAnswers] = useState([]);
     const timerRef = useRef(null);
     const navigate = useNavigate();
@@ -106,6 +107,16 @@ const Quiz = () => {
         }
     }, [timeLeft]);
 
+    useEffect(() => {
+        if (finished) {
+            confetti({
+                particleCount: 150,
+                spread: 100,
+                origin: { y: 0.6 },
+            });
+        }
+    }, [finished]);
+
     const handleAnswer = (answer) => {
         if (selected || finished) return;
         setSelected(answer);
@@ -124,27 +135,55 @@ const Quiz = () => {
 
     if (finished) {
         return (
-            <div className="container text-center mt-5">
-                <h2 className="mb-3">🎉 Игра завершена!</h2>
-                <p className="lead">
-                    Правильных ответов: {score} из {data.length}
-                </p>
-                <button
-                    className="btn btn-secondary"
-                    onClick={() => window.location.reload()}
-                >
-                    Сыграть ещё раз
-                </button>
+            <div
+                className="d-flex justify-content-center align-items-center"
+                style={{
+                    minHeight: "100vh",
+                    width: "100vw",
+                    margin: 0,
+                    padding: 0,
+                    background: "linear-gradient(to right, #4facfe, #00f2fe)",
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    overflow: "hidden",
+                }}
+            >
+                <div className="container text-center">
+                    <h2 className="mb-3 text-white">🎉 Игра завершена!</h2>
+                    <p className="lead text-white fw-bold fs-4">
+                        Правильных ответов: {score} из {data.length}
+                    </p>
+                    <div className="d-flex justify-content-center gap-3">
+                        <button
+                            className="btn btn-light btn-lg"
+                            onClick={() => window.location.reload()}
+                        >
+                            Сыграть ещё раз
+                        </button>
+
+                        <button
+                            className="btn btn-light btn-lg"
+                            onClick={() => (window.location.href = "/")}
+                        >
+                            В главное меню
+                        </button>
+                    </div>
+                </div>
             </div>
         );
     }
-
     return (
         <div
             className="d-flex justify-content-center align-items-center"
             style={{
                 minHeight: "100vh",
-                backgroundColor: "#f8f9fa",
+                width: "100vw",
+                margin: 0,
+                padding: 0,
+                background: "linear-gradient(to right, #4facfe, #00f2fe)", // красивый градиент
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                overflow: "hidden",
             }}
         >
             <div
@@ -169,9 +208,20 @@ const Quiz = () => {
                         {decodeHTML(answer)}
                     </button>
                 ))}
-                <p className="mt-3 text-muted">
-                    Вопрос {current + 1} из {data.length}
-                </p>
+                <div className="progress my-3" style={{ height: "20px" }}>
+                    <div
+                        className="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                        role="progressbar"
+                        style={{
+                            width: `${((current + 1) / data.length) * 100}%`,
+                        }}
+                        aria-valuenow={current + 1}
+                        aria-valuemin="0"
+                        aria-valuemax={data.length}
+                    >
+                        Вопрос {current + 1} из {data.length}
+                    </div>
+                </div>
 
                 <p className="text-danger fw-bold">
                     Осталось времени: {timeLeft} сек
