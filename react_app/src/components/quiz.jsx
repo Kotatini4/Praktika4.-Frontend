@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 const decodeHTML = (html) => {
@@ -7,7 +8,6 @@ const decodeHTML = (html) => {
     return txt.value;
 };
 
-// 🔹 Вопросы по географии
 const data = [
     {
         question: "Столица Франции?",
@@ -66,20 +66,48 @@ const Quiz = () => {
     const [selected, setSelected] = useState(null);
     const [score, setScore] = useState(0);
     const [finished, setFinished] = useState(false);
-
+    const [timeLeft, setTimeLeft] = useState(120);
+    const [answers, setAnswers] = useState([]);
+    const timerRef = useRef(null);
+    const navigate = useNavigate();
     const currentQuestion = data[current];
 
-    const shuffledAnswers = [...currentQuestion.incorrect_answers];
-    if (!shuffledAnswers.includes(currentQuestion.correct_answer)) {
-        shuffledAnswers.splice(
-            Math.floor(Math.random() * 4),
-            0,
-            currentQuestion.correct_answer
-        );
-    }
+    useEffect(() => {
+        const shuffle = () => {
+            const options = [...data[current].incorrect_answers];
+            const correct = data[current].correct_answer;
+
+            if (!options.includes(correct)) {
+                options.splice(
+                    Math.floor(Math.random() * (options.length + 1)),
+                    0,
+                    correct
+                );
+            }
+
+            return options;
+        };
+
+        setAnswers(shuffle());
+    }, [current]);
+
+    useEffect(() => {
+        timerRef.current = setInterval(() => {
+            setTimeLeft((prev) => prev - 1);
+        }, 1000);
+
+        return () => clearInterval(timerRef.current);
+    }, []);
+
+    useEffect(() => {
+        if (timeLeft <= 0) {
+            clearInterval(timerRef.current);
+            setFinished(true);
+        }
+    }, [timeLeft]);
 
     const handleAnswer = (answer) => {
-        if (selected) return;
+        if (selected || finished) return;
         setSelected(answer);
         if (answer === currentQuestion.correct_answer) {
             setScore(score + 1);
@@ -124,7 +152,7 @@ const Quiz = () => {
                 style={{ maxWidth: "600px" }}
             >
                 <h4 className="mb-3">{decodeHTML(currentQuestion.question)}</h4>
-                {shuffledAnswers.map((answer, index) => (
+                {answers.map((answer, index) => (
                     <button
                         key={index}
                         onClick={() => handleAnswer(answer)}
@@ -144,6 +172,18 @@ const Quiz = () => {
                 <p className="mt-3 text-muted">
                     Вопрос {current + 1} из {data.length}
                 </p>
+
+                <p className="text-danger fw-bold">
+                    Осталось времени: {timeLeft} сек
+                </p>
+
+                <button
+                    onClick={() => setFinished(true)}
+                    className="btn btn-outline-danger mt-4"
+                    style={{ float: "right" }}
+                >
+                    Выйти
+                </button>
             </div>
         </div>
     );
